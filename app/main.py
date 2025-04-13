@@ -1,7 +1,6 @@
 # fastapi
 from fastapi import FastAPI
 from app.core.modules import init_routers, make_middleware
-from app.api.v1 import quiz
 from app.core.redis import init_cache
 
 
@@ -15,7 +14,6 @@ def create_app() -> FastAPI:
     )
     
     # 라우터 등록
-    app_.include_router(quiz.router, prefix="/api/v1", tags=["quizzes"])
     init_routers(app_=app_)
     
     # 캐시 초기화

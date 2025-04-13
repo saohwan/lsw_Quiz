@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/quiz_db
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/lsw_quiz
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=your-secret-key-here
       - ALGORITHM=HS256
@@ -17,8 +17,8 @@ services:
     depends_on:
       - db
       - redis
-    volumes:
-      - .:/app
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     networks:
       - quiz-network
 

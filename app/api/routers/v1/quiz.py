@@ -15,7 +15,7 @@ from app.core.redis import get_from_cache, set_to_cache
 router = APIRouter()
 
 
-@router.post("/quizzes", response_model=QuizInDB)
+@router.post("", response_model=QuizInDB)
 async def create_quiz(
     quiz: QuizCreate,
     db: Session = Depends(get_db),
@@ -47,7 +47,7 @@ async def create_quiz(
     return db_quiz
 
 
-@router.put("/quizzes/{quiz_id}", response_model=QuizInDB)
+@router.put("/{quiz_id}", response_model=QuizInDB)
 async def update_quiz(
     quiz_id: int,
     quiz: QuizUpdate,
@@ -67,7 +67,7 @@ async def update_quiz(
     return db_quiz
 
 
-@router.delete("/quizzes/{quiz_id}")
+@router.delete("/{quiz_id}")
 async def delete_quiz(
     quiz_id: int,
     db: Session = Depends(get_db),
@@ -83,7 +83,7 @@ async def delete_quiz(
     return {"message": "Quiz deleted successfully"}
 
 
-@router.get("/quizzes", response_model=List[QuizList])
+@router.get("", response_model=List[QuizList])
 async def list_quizzes(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
@@ -118,7 +118,7 @@ async def list_quizzes(
     return result
 
 
-@router.get("/quizzes/{quiz_id}", response_model=QuizInDB)
+@router.get("/{quiz_id}", response_model=QuizInDB)
 async def get_quiz(
     quiz_id: int,
     page: int = Query(1, ge=1),
@@ -154,7 +154,7 @@ async def get_quiz(
     return db_quiz
 
 
-@router.post("/quizzes/{quiz_id}/attempt", response_model=QuizAttemptInDB)
+@router.post("/{quiz_id}/attempt", response_model=QuizAttemptInDB)
 async def submit_quiz_attempt(
     quiz_id: int,
     attempt: QuizAttemptCreate,

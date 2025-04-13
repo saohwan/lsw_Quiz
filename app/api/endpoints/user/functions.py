@@ -31,7 +31,13 @@ def get_user_by_id(db: Session, user_id: int):
 # crete new user 
 def create_new_user(db: Session, user: UserCreate):
     hashed_password = pwd_context.hash(user.password)
-    new_user = UserModel.User(email=user.email, password=hashed_password, first_name=user.first_name, last_name=user.last_name)
+    new_user = UserModel.User(
+        email=user.email, 
+        hashed_password=hashed_password, 
+        first_name=user.first_name, 
+        last_name=user.last_name,
+        username=user.email.split('@')[0]  # 기본 사용자명으로 이메일의 @ 앞부분을 사용
+    )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -69,7 +75,7 @@ def authenticate_user(db: Session, user: UserCreate):
     member = get_user_by_email(db, user.email)
     if not member:
         return False
-    if not verify_password(user.password, member.password):
+    if not verify_password(user.password, member.hashed_password):
         return False
     return member
 

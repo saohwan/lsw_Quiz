@@ -21,7 +21,7 @@ class User(UserBase):
 	is_active: bool
 	role: UserRole or None
 	created_at: datetime
-	updated_at: datetime
+	updated_at: Optional[datetime] = None
 	class Config:
 		from_attributes = True
 
