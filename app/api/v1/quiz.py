@@ -10,8 +10,7 @@ from app.schemas.quiz import (
 from app.models.quiz import Quiz, Question, QuizAttempt, Answer
 from app.models.user import User
 import random
-from fastapi_cache.decorator import cache
-from app.core.cache import redis_cache
+from app.core.redis import get_from_cache, set_to_cache
 
 router = APIRouter()
 
@@ -85,7 +84,6 @@ async def delete_quiz(
 
 
 @router.get("/quizzes", response_model=List[QuizList])
-@cache(expire=60)
 async def list_quizzes(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
@@ -93,6 +91,11 @@ async def list_quizzes(
     current_user: User = Depends(get_current_user)
 ):
     """퀴즈 목록을 조회합니다. 관리자는 전체 목록을, 사용자는 응시 여부를 포함한 목록을 볼 수 있습니다."""
+    cache_key = f"quizzes:list:{skip}:{limit}:{current_user.id}"
+    cached_data = await get_from_cache(cache_key)
+    if cached_data:
+        return cached_data
+
     query = db.query(Quiz)
     
     if not current_user.is_admin:
@@ -101,19 +104,21 @@ async def list_quizzes(
         attempted_quiz_ids = {attempt.quiz_id for attempt in attempts}
         
         quizzes = query.offset(skip).limit(limit).all()
-        return [
+        result = [
             QuizList(
                 **quiz.__dict__,
                 is_completed=quiz.id in attempted_quiz_ids
             )
             for quiz in quizzes
         ]
-    
-    return query.offset(skip).limit(limit).all()
+    else:
+        result = query.offset(skip).limit(limit).all()
+
+    await set_to_cache(cache_key, result)
+    return result
 
 
 @router.get("/quizzes/{quiz_id}", response_model=QuizInDB)
-@cache(expire=60)
 async def get_quiz(
     quiz_id: int,
     page: int = Query(1, ge=1),
@@ -122,6 +127,11 @@ async def get_quiz(
     current_user: User = Depends(get_current_user)
 ):
     """퀴즈 상세 정보를 조회합니다. 문제는 페이징 처리됩니다."""
+    cache_key = f"quiz:{quiz_id}:{page}:{questions_per_page}"
+    cached_data = await get_from_cache(cache_key)
+    if cached_data:
+        return cached_data
+
     db_quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
     if not db_quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
@@ -140,6 +150,7 @@ async def get_quiz(
     paginated_questions = questions[start_idx:end_idx]
     
     db_quiz.questions = paginated_questions
+    await set_to_cache(cache_key, db_quiz)
     return db_quiz
 
 
